@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  database:
+    image: mongo:latest
+    container_name: talentai_mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - talentai_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: talentai_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URI=mongodb://database:27017/talentai_hrms
+      - DATABASE_NAME=talentai_hrms
+      - JWT_SECRET_KEY=super_secret_key_for_talentai_hrms_production_1234567890
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      - database
+    networks:
+      - talentai_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: talentai_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - talentai_network
+
+volumes:
+  mongodb_data:
+
+networks:
+  talentai_network:
+    driver: bridge
